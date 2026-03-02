@@ -1,5 +1,6 @@
 #!/bin/bash
-
+cd /root/.spack
+mv packages.yaml packages.yaml.bak
 cd /opt
 cd spack-stack
 . ./setup.sh

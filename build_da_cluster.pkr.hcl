@@ -50,9 +50,9 @@ variable "aws_source_ami_filter_ubuntu_2204_hvm" {
     owners = list(string)
   })
   default = {
-    name = "aws-parallelcluster-3.14.2-ubuntu-2204-lts-hvm-x86_64-202602121712 2026-02-12T17-16-34.426Z"
+    name = "uifcw-cluster-20250825-161718.*"
     owners = [
-      "247102896272"
+      "567295733163"
     ]
   }
 }
@@ -145,7 +145,7 @@ build {
 
   provisioner "shell" {
     execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
-    script          = "${path.root}/da-cluster-start-script.sh"
+    script          = "${path.root}/da-cluster-update-script.sh"
     valid_exit_codes = [0,1,2]
   }
 }
