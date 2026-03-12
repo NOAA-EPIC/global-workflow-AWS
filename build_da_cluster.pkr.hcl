@@ -50,9 +50,9 @@ variable "aws_source_ami_filter_ubuntu_2204_hvm" {
     owners = list(string)
   })
   default = {
-    name = "uifcw-cluster-20250825-161718.*"
+    name = "aws-parallelcluster-3.13.2-ubuntu-2204-lts-hvm-x86_64-202506200243 2025-06-20T02-47-33.760Z"
     owners = [
-      "567295733163"
+      "247102896272"
     ]
   }
 }
