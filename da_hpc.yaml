@@ -1,7 +1,7 @@
 Region: us-east-1
 Image:
   Os: ubuntu2204 
-  CustomAmi: ami-0b64ea1d7bdfc1113 
+  CustomAmi: ami-01861b0793635538d 
 HeadNode:
   InstanceType: c7i.2xlarge
   Networking:
