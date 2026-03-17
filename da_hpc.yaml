@@ -1,13 +1,13 @@
 Region: us-east-1
 Image:
   Os: ubuntu2204 
-  CustomAmi: ami-06eed812c545acc77
+  CustomAmi: ami-01861b0793635538d 
 HeadNode:
   InstanceType: c7i.2xlarge
   Networking:
     SubnetId: subnet-088f38370a401610e 
   Ssh:
-    KeyName: epic_rsa 
+    KeyName: global-workflow 
   LocalStorage:
     RootVolume:
       Size: 500
@@ -27,7 +27,21 @@ Scheduling:
       Instances:
       - InstanceType: c7i.24xlarge
       MinCount: 0
-      MaxCount: 10 
+      MaxCount: 50 
+      Efa:
+        Enabled: false 
+    Networking:
+      PlacementGroup:
+        Enabled: true
+      SubnetIds:
+      - subnet-088f38370a401610e
+  - Name: processing 
+    ComputeResources:
+    - Name: c7i12xlarge
+      Instances:
+      - InstanceType: c7i.12xlarge
+      MinCount: 0
+      MaxCount: 50 
       Efa:
         Enabled: false 
     Networking:
@@ -36,10 +50,8 @@ Scheduling:
       SubnetIds:
       - subnet-088f38370a401610e
 SharedStorage:
-  - MountDir: /scratch
-    Name: ebs
-    StorageType: Ebs
-    EbsSettings:
-      VolumeType: gp3
-      DeletionPolicy: Delete
-      Size: 500
+  - MountDir: /lustre
+    Name: globalworkflow 
+    StorageType: FsxLustre
+    FsxLustreSettings:
+      FileSystemId: fs-0c4241acba3119042 

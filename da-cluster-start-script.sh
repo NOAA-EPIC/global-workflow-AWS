@@ -25,8 +25,22 @@ DEBIAN_FRONTEND=noninteractive apt install -y lua5.3
 DEBIAN_FRONTEND=noninteractive apt install -y liblua5.3-dev
 DEBIAN_FRONTEND=noninteractive apt install -y lua-posix
 
+wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+DEBIAN_FRONTEND=noninteractive apt update
+
+DEBIAN_FRONTEND=noninteractive apt install -y --allow-downgrades intel-basekit=2024.2.1-98
+DEBIAN_FRONTEND=noninteractive apt install -y --allow-downgrades intel-hpckit=2024.2.1-77
+DEBIAN_FRONTEND=noninteractive apt install -y --allow-downgrades intel-oneapi-compiler-dpcpp-cpp=2024.2.1-1079
+
+cd /opt/intel/oneapi/compiler
+unlink latest
+ln -s 2024.2 latest
+
+#!/bin/bash
+
 # install cmake
-cd /opt/build 
+cd /opt/build
 curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.sh && /bin/bash cmake-3.27.9-linux-x86_64.sh --prefix=/usr/local --skip-license
 # install lmod
 wget https://sourceforge.net/projects/lmod/files/Lmod-8.7.tar.bz2
@@ -40,17 +54,33 @@ ls -l /bin/sh
 DEBIAN_FRONTEND=noninteractive apt-get update -yq --allow-unauthenticated
 #rm /etc/profile.d/modules.sh
 #dpkg -S /etc/profile.d/modules.sh
+
+
 cd /opt
 git clone -b release/1.9.0 --recurse-submodules https://github.com/jcsda/spack-stack.git
 cd spack-stack
 . ./setup.sh
+
 spack compiler find
 spack compiler rm gcc@12.3.0
-spack install intel-oneapi-compilers@2024.2.1
-spack install intel-oneapi-mpi@2021.13
-export ONEAPIPATH=`ls -d /opt/spack-stack/spack/opt/spack/linux-ubuntu22.04-*/gcc-11.4.0/intel-oneapi-compilers-2024.2.1-*`
-export ONEAPIMPIPATH=`ls -d /opt/spack-stack/spack/opt/spack/linux-ubuntu22.04-*/gcc-11.4.0/intel-oneapi-mpi-2021.13.1-*`
-spack compiler add `spack location -i intel-oneapi-compilers` $ONEAPIPATH/compiler/latest/bin/
+
+cd /root/.spack
+mv packages.yaml packages.yaml.bak
+tee /root/.spack/packages.yaml <<EOF
+packages:
+  gcc:
+    externals:
+    - spec: gcc@11.4.0 languages='c,c++,fortran'
+      prefix: /usr
+      extra_attributes:
+        compilers:
+          c: /usr/bin/gcc
+          cxx: /usr/bin/g++
+          fortran: /usr/bin/gfortran
+EOF
+
+export ONEAPIPATH='/opt/intel/oneapi'
+export ONEAPIMPIPATH='/opt/intel'
 
 tee /opt/spack-stack/configs/sites/tier2/linux.default/compilers.yaml <<EOF
 compilers:
@@ -59,8 +89,8 @@ compilers:
     paths:
       cc: ${ONEAPIPATH}/compiler/latest/bin/icx
       cxx: ${ONEAPIPATH}/compiler/latest/bin/icpx
-      f77: ${ONEAPIPATH}/compiler/latest/bin/ifort 
-      fc: ${ONEAPIPATH}/compiler/latest/bin/ifort 
+      f77: ${ONEAPIPATH}/compiler/latest/bin/ifort
+      fc: ${ONEAPIPATH}/compiler/latest/bin/ifort
     flags: {}
     operating_system: ubuntu22.04
     target: x86_64
@@ -103,7 +133,7 @@ EOF
 tee /opt/spack-stack/configs/sites/tier2/linux.default/packages.yaml <<EOF
 packages:
   # For addressing https://github.com/JCSDA/spack-stack/issues/1355
-  #   Use system zlib instead of spack-built zlib-ng 
+  #   Use system zlib instead of spack-built zlib-ng
   autoconf:
     externals:
     - spec: autoconf@2.71
@@ -197,8 +227,8 @@ packages:
       environment:
       prepend_path:
         MODULEPATH: '/opt/modulefiles'
-      prefix: ${ONEAPIMPIPATH} 
-      
+      prefix: ${ONEAPIMPIPATH}
+
   ectrans:
     require::
     - '@1.5.0 ~mkl +fftw'
@@ -306,7 +336,8 @@ prepend_path("LD_LIBRARY_PATH","/home/ubuntu/rocoto/lib")
 
 EOF
 
-spack stack create env --site linux.default --template unified-dev --name ue-oneapi-2024.2.1 --compiler oneapi 
+spack stack create env --site linux.default --template unified-dev --name ue-oneapi-2024.2.1 --compiler oneapi
+
 tee /opt/spack-stack/envs/ue-oneapi-2024.2.1/spack.yaml <<EOF
 # spack-stack hash: 261cfcc
 # spack hash: f1be100187
@@ -323,12 +354,17 @@ spack:
   - compilers:
     - '%oneapi'
   - packages:
-     - ufs-srw-app-env       ^esmf@=8.8.0
-     - ufs-weather-model-env ^esmf@=8.8.0
+     - global-workflow-env   ^esmf@=8.6.1 ^crtm@=3.1.1-build1 ^crtm-fix@=3.1.1.3
+     - jedi-fv3-env
+     - jedi-neptune-env      ^esmf@=8.8.0
+     - jedi-tools-env
+     - neptune-env           ^esmf@=8.8.0
+     - neptune-python-env    ^esmf@=8.8.0
+     - ufs-srw-app-env       ^esmf@=8.8.0 ^crtm@=3.1.1-build1 ^crtm-fix@=3.1.1.3
+     - ufs-weather-model-env ^esmf@=8.8.0 ^crtm@=3.1.1-build1 ^crtm-fix@=3.1.1.3
      - crtm@2.4.0.1
      - mapl@2.53.4 ^esmf@8.8.0
      - esmf@=8.8.0 snapshot=none
-     - sp@2.5.0
   specs:
   - matrix:
     - [\$packages]
@@ -342,6 +378,8 @@ spack:
     - ai-env%oneapi
     - jedi-tools-env%intel
     - jedi-tools-env%oneapi
+  - zlib@1.2.13
+  - py-click@8.1.7
   packages:
     all:
       prefer: ['%oneapi']
@@ -351,6 +389,10 @@ EOF
 
 cd /opt/spack-stack/envs/ue-oneapi-2024.2.1
 spack env activate -p .
+spack compiler find 
+spack compiler rm gcc@12.3.0
+spack compiler rm oneapi@2024.2.1
+spack compiler add `spack location -i intel-oneapi-compilers` $ONEAPIPATH/compiler/latest/bin/
 spack concretize 2>&1 | tee log.concretize
 spack install --verbose --fail-fast --show-log-on-error --no-check-signature 2>&1 | tee log.install
 
@@ -359,51 +401,8 @@ spack stack setup-meta-modules
 
 spack env deactivate
 
-### Add Grads
-cd /opt
-git clone --depth=2 https://github.com/spack/spack.git
-. spack/share/spack/setup-env.sh
-cd spack
-spack install grads 2>&1 | tee log.install_grads.001
-
-cd /opt/modulefiles
-mkdir grads
-cd grads
-
-export GRADSPATH=`ls -d /opt/spack/opt/spack/linux-sapphirerapids/grads-2.2.3-*`
-
-tee /opt/modulefiles/grads/2.2.3.lua <<EOF
-
-whatis("Name : grads")
-whatis("Version : 2.2.1")
-whatis("Target : x86_64_v4")
-whatis("Short description : The Grid Analysis and Display System (GrADS) is an interactive desktop tool that is used for easy access, manipulation, and visualization of earth science data. GrADS has two data models for handling gridded and station data. GrADS supports many data file formats, including binary (stream or sequential), GRIB (version 1 and 2), NetCDF, HDF (version 4 and 5), and BUFR (for station data).")
-whatis("Configure options : --with-geotiff --with-hdf4 --with-hdf5 --with-netcdf --without-gadap")
-help([[Name   : grads]])
-help([[Version: 2.2.3]])
-help([[Target : x86_64_v4]])
-help()
-help([[The Grid Analysis and Display System (GrADS) is an interactive desktop
-tool that is used for easy access, manipulation, and visualization of
-earth science data. GrADS has two data models for handling gridded and
-station data. GrADS supports many data file formats, including binary
-(stream or sequential), GRIB (version 1 and 2), NetCDF, HDF (version 4
-and 5), and BUFR (for station data).]])
-prepend_path("PATH","${GRADSPATH}/bin")
-prepend_path("LD_LIBRARY_PATH","${GRADSPATH}/lib")
-setenv("GADDIR","${GRADSPATH}/data")
-setenv("GRADS_ROOT","${GRADSPATH}")
-
-EOF
-
-## Add ImgCAT
-cd /opt
-curl -O https://iterm2.com/utilities/imgcat
-chmod +x imgcat
-sudo mv imgcat /usr/local/bin/
-
 ### Add Ruby
-DEBIAN_FRONTEND=noninteractive apt-get update -yq --allow-unauthenticated 
+DEBIAN_FRONTEND=noninteractive apt-get update -yq --allow-unauthenticated
 DEBIAN_FRONTEND=noninteractive apt install -y ruby-full
 
 su - ubuntu <<'EOF'
@@ -422,6 +421,7 @@ cd /home/ubuntu
 echo 'export PATH="$PATH:/home/ubuntu/rocoto/bin"' >> .bashrc
 echo 'module use /opt/modulefiles' >> .bashrc
 echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/Core' >> .bashrc
+echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/gcc' >> .bashrc
 echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/intel-oneapi-mpi/2021.13-dsdmcwn/gcc/11.4.0' >> .bashrc
 
 
