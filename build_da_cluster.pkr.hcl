@@ -145,7 +145,7 @@ build {
 
   provisioner "shell" {
     execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
-    script          = "${path.root}/da-cluster-update-script.sh"
+    script          = "${path.root}/da-cluster-start-script.sh"
     valid_exit_codes = [0,1,2]
   }
 }
