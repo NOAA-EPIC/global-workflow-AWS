@@ -378,13 +378,27 @@ spack:
     - ai-env%oneapi
     - jedi-tools-env%intel
     - jedi-tools-env%oneapi
+  - zlib@1.2.13
+  - py-click@8.1.7
   packages:
     all:
       prefer: ['%oneapi']
       providers:
         mpi: [intel-oneapi-mpi]
-  - zlib@1.2.13
-  - py-click@8.1.7
+  compilers:
+  - compiler:
+      spec: oneapi@=2024.2.1
+      paths:
+        cc: /opt/intel/oneapi/compiler/latest/bin/icx
+        cxx: /opt/intel/oneapi/compiler/latest/bin/icpx 
+        f77: /opt/intel/oneapi/compiler/latest/bin/ifort 
+        fc: /opt/intel/oneapi/compiler/latest/bin/ifort
+      flags: {}
+      operating_system: ubuntu22.04
+      target: x86_64
+      modules: []
+      environment: {}
+      extra_rpaths: []
 EOF
 
 cd /opt/spack-stack/envs/ue-oneapi-2024.2.1
@@ -421,8 +435,8 @@ cd /home/ubuntu
 echo 'export PATH="$PATH:/home/ubuntu/rocoto/bin"' >> .bashrc
 echo 'module use /opt/modulefiles' >> .bashrc
 echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/Core' >> .bashrc
-echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/gcc' >> .bashrc
-echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/intel-oneapi-mpi/2021.13-dsdmcwn/gcc/11.4.0' >> .bashrc
+echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/gcc/11.4.0' >> .bashrc
+echo 'module use /opt/spack-stack/envs/ue-oneapi-2024.2.1/install/modulefiles/intel-oneapi-mpi/2021.13-*/gcc/11.4.0' >> .bashrc
 
 
 EOF
