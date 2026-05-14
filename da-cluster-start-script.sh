@@ -25,6 +25,11 @@ DEBIAN_FRONTEND=noninteractive apt install -y lua5.3
 DEBIAN_FRONTEND=noninteractive apt install -y liblua5.3-dev
 DEBIAN_FRONTEND=noninteractive apt install -y lua-posix
 
+# install s3-mountpoint
+wget https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
+DEBIAN_FRONTEND=noninteractive apt install -y ./mount-s3.deb
+
+# install intel compilers
 wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
 DEBIAN_FRONTEND=noninteractive apt update
@@ -38,6 +43,11 @@ unlink latest
 ln -s 2024.2 latest
 
 #!/bin/bash
+
+# update number of open files
+sed -i '55s/.*/*               hard    nofile          1048576/' /etc/security/limits.conf
+echo "fs.file-max = 1048576" >> /etc/sysctl.conf
+sysctl -p 
 
 # install cmake
 cd /opt/build

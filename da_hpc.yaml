@@ -1,7 +1,7 @@
 Region: us-east-1
 Image:
   Os: ubuntu2204 
-  CustomAmi: ami-0863b11511a6c180f 
+  CustomAmi: ami-0898fa42f47e81bd3 
 HeadNode:
   InstanceType: c7i.2xlarge
   Networking:
@@ -55,3 +55,4 @@ SharedStorage:
     StorageType: FsxLustre
     FsxLustreSettings:
       FileSystemId: fs-0c4241acba3119042 
+    
