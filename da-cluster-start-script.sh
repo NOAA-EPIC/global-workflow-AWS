@@ -45,9 +45,12 @@ ln -s 2024.2 latest
 #!/bin/bash
 
 # update number of open files
-sed -i '55s/.*/*               hard    nofile          1048576/' /etc/security/limits.conf
+sed -i '55s/.*/*               soft    nofile          1048576/' /etc/security/limits.conf
+sed -i '56s/.*/*               hard    nofile          1048576/' /etc/security/limits.conf
 echo "fs.file-max = 1048576" >> /etc/sysctl.conf
 sysctl -p 
+
+sed -i 's/LimitNOFILE=131072/LimitNOFILE=1048576/' /etc/chef/cookbooks/aws-parallelcluster-slurm/templates/default/slurm/compute/slurmd.service.erb
 
 # install cmake
 cd /opt/build
